@@ -1,0 +1,11 @@
+# Personal training records, local credentials, and private handover files
+*.local
+.env
+.env.*
+!.env.example
+.dev.vars*
+*.json.bak
+private/
+backups/
+handover/
+node_modules/

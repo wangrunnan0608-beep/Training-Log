@@ -1,4 +1,4 @@
-const CACHE='training-log-shell-v4-20261102';
+const CACHE='training-log-shell-v4-20261103-local1';
 const ASSETS=['./','./index.html','./app.js','./manifest.webmanifest','./icon-192.png','./icon-512.png'];
 self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(c=>c.addAll(ASSETS)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',event=>event.waitUntil(Promise.all([caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('training-log-shell-')&&k!==CACHE).map(k=>caches.delete(k)))),self.clients.claim()])));
