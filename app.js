@@ -75,15 +75,26 @@ function formatAdvice(text,type,requireWarmup=false){
 }
 const PLAN='strength-journal-plan-v1';let pendingPlan=read(PLAN,null);
 function showPlan(){const out=$('#aiOutput');if(!pendingPlan||pendingPlan.date!==nowDate())return;try{$('#aiType').value=pendingPlan.type;out.textContent=formatAdvice(JSON.stringify(pendingPlan.data),pendingPlan.type);out.classList.remove('hidden');$('#applyPlan').classList.toggle('hidden',!pendingPlan.data.exercises.some(e=>e.sets.length));}catch{pendingPlan=null}}
-$('#applyPlan').onclick=()=>{try{
- if(editId)throw Error('请先保存或取消历史编辑，再使用计划');
+function askDecision(title,message,yes,no='取消'){return new Promise(resolve=>{const dialog=$('#decisionDialog');$('#decisionTitle').textContent=title;$('#decisionMessage').textContent=message;$('#decisionYes').textContent=yes;$('#decisionNo').textContent=no;dialog.returnValue='';dialog.onclose=()=>resolve(dialog.returnValue==='yes');$('#decisionYes').onclick=()=>dialog.close('yes');$('#decisionNo').onclick=()=>dialog.close('no');dialog.showModal()})}
+$('#applyPlan').onclick=async()=>{const button=$('#applyPlan');button.disabled=true;try{
  if(!pendingPlan||pendingPlan.date!==nowDate())throw Error('请重新生成今天的计划');
- if(draft.exercises.length||String(draft.notes||'').trim())throw Error('当前训练已有内容，请先完成当前训练；计划已保留，不会覆盖');
- formatAdvice(JSON.stringify(pendingPlan.data),pendingPlan.type);
- const next=fresh(pendingPlan.type);next.exercises=pendingPlan.data.exercises.filter(e=>e.sets.length).map(e=>({name:canonical(e.name),sets:e.sets.map(z=>({setType:z.setType,weight:isHang(e.name)?z.assistFootKg:z.weightKg,...(isHang(e.name)?{seconds:''}:isSide(e.name)?{leftReps:'',rightReps:''}:{reps:''}),aiTarget:clone(z)}))}));
+ const plan=clone(pendingPlan);formatAdvice(JSON.stringify(plan.data),plan.type);
+ const next=fresh(plan.type);next.exercises=plan.data.exercises.filter(e=>e.sets.length).map(e=>({name:canonical(e.name),sets:e.sets.map(z=>({setType:z.setType,weight:isHang(e.name)?z.assistFootKg:z.weightKg,...(isHang(e.name)?{seconds:''}:isSide(e.name)?{leftReps:'',rightReps:''}:{reps:''}),aiTarget:clone(z)}))}));
  if(!next.exercises.length)throw Error('此计划没有可导入的力量训练组');
- localStorage.setItem(D4,JSON.stringify(next));draft=next;active=0;render();switchPage('entry');toast('计划已带入，请完成每组后填写实际次数或秒数');
- }catch(e){toast(e.message)}};
+ let updatedSessions=null;
+ if(editId){
+  const saveAndUse=await askDecision('正在编辑历史记录','是否继续编辑历史记录？选择“保存历史并使用新计划”后，会询问是否覆盖当前训练计划；最终确认后才保存历史修改并切换计划。','保存历史并使用新计划','继续编辑历史');
+  if(!saveAndUse){switchPage('entry');window.scrollTo({top:0,behavior:'smooth'});return}
+  const edited=validate(),index=sessions.findIndex(s=>s.id===editId);if(index<0)throw Error('历史记录已不存在');edited.id=editId;edited.createdAt=sessions[index].createdAt;edited.startAt=sessions[index].startAt;edited.updatedAt=new Date().toISOString();updatedSessions=sessions.map((s,i)=>i===index?edited:s);
+ }
+ const replace=await askDecision('覆盖当前训练计划？',updatedSessions?'确认后将保存历史修改、退出历史编辑，并用这份 AI 计划替换当前训练计划。当前计划中已填写的内容也会被替换。':'是否用这份 AI 计划覆盖当前训练计划？当前计划中已填写的动作、重量和次数也会被替换。已保存的训练历史不受影响。','确认覆盖');
+ if(!replace)return;
+ const beforeDraft=localStorage.getItem(D4);
+ // Keep one local recovery snapshot before a user-confirmed replacement. No credentials are included.
+ localStorage.setItem('strength-journal-replaced-plan-v1',JSON.stringify({savedAt:new Date().toISOString(),draft:editId?preEditDraft:draft,historyEdit:editId?draft:null,historyId:editId}));
+ try{localStorage.setItem(D4,JSON.stringify(next));if(updatedSessions)localStorage.setItem(S,JSON.stringify(updatedSessions))}catch(e){try{if(beforeDraft===null)localStorage.removeItem(D4);else localStorage.setItem(D4,beforeDraft)}catch{}throw Error('保存失败，未切换计划；请先导出备份再重试')}
+ if(updatedSessions)sessions=updatedSessions;editId=null;preEditDraft=null;draft=next;active=0;render();switchPage('entry');$('#storage').textContent='本机已保存';window.scrollTo({top:0,behavior:'smooth'});toast(updatedSessions?'历史修改已保存，新计划已带入':'新计划已带入，请完成每组后填写实际次数或秒数');
+ }catch(e){toast(e.message)}finally{button.disabled=false}};
 $('#aiSuggest').onclick=async()=>{const b=$('#aiSuggest'),out=$('#aiOutput');b.disabled=true;b.textContent='分析中…';$('#applyPlan').classList.add('hidden');out.classList.remove('hidden');out.textContent='正在根据实际训练记录安排今天的计划…';try{const result=await callAI();pendingPlan=result.plan;try{localStorage.setItem(PLAN,JSON.stringify(pendingPlan))}catch{toast('计划生成成功，但无法保存；请及时使用')}out.textContent=result.text;$('#applyPlan').classList.toggle('hidden',!pendingPlan.data.exercises.some(e=>e.sets.length));}catch(e){out.textContent='AI调用失败：'+e.message+'\n原有训练记录仍可离线使用。'}finally{b.disabled=false;b.textContent='分析最近记录，生成今日建议'}};
 showPlan();
 // Existing v3 history storage preserved; migrate only draft, never overwrite any saved history.

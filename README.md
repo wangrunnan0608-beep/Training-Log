@@ -33,3 +33,7 @@ AI逐组计划加入setType（warmup/work），有依据的力量动作先安排
 新增DeepSeek直连模式（默认），固定请求https://api.deepseek.com/chat/completions。用户在手机输入自己的Key，可选仅会话或在本机记住，也可清除。Key不写入源码、不进入训练JSON备份、不发送给Cloudflare。Worker保留为独立备用模式，凭据分开保存。默认不自动切换请求路径。仓库可见性不改变。
 
 模拟验证：node tests/direct.test.cjs，检查目标URL、认证头、记住/清除、会话过期及导出排除Key。真实Key完整调用与iPhone无VPN网络尚需用户实测。
+
+## v4.3.1
+
+使用AI计划时弹窗确认覆盖。历史编辑中可继续编辑，或在最终确认后保存历史修改并替换当前计划；取消不保存、不退出。保存失败则保持编辑状态并恢复原草稿存储。确认覆盖前保留一份本机恢复快照strength-journal-replaced-plan-v1（不包含连接凭据）。提示移到屏幕下方、避开底栏与安全区域，使用实色底白字。计划浏览器测试覆盖这些分支及存储失败回滚。
