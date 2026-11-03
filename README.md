@@ -27,3 +27,9 @@ GitHub main 根目录发布 Pages。Worker 源码为 worker/worker.mjs，仅部�
 ## v4.2.1
 
 AI逐组计划加入setType（warmup/work），有依据的力量动作先安排轻量热身，再安排正式组。总组数上限由4调整为8，响应预算增加以容纳热身组。新计划校验分类及顺序；记录页、历史、JSON保留分类，发送实际数据时包括分类，旧记录不自动补分类。已有旧计划须重新生成才包含新热身建议。
+
+## v4.3.0
+
+新增DeepSeek直连模式（默认），固定请求https://api.deepseek.com/chat/completions。用户在手机输入自己的Key，可选仅会话或在本机记住，也可清除。Key不写入源码、不进入训练JSON备份、不发送给Cloudflare。Worker保留为独立备用模式，凭据分开保存。默认不自动切换请求路径。仓库可见性不改变。
+
+模拟验证：node tests/direct.test.cjs，检查目标URL、认证头、记住/清除、会话过期及导出排除Key。真实Key完整调用与iPhone无VPN网络尚需用户实测。

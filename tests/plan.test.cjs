@@ -8,7 +8,7 @@ const A={exercises:[{name:'侧平举',sets:[{setType:'warmup',weightKg:2,leftRep
 await p.route('https://example.com/api/chat',async r=>{sent=r.request().postDataJSON();const type=JSON.parse(sent.messages[1].content).dayType;await r.fulfill({json:{choices:[{message:{content:JSON.stringify(type==='A'?A:B)}}]}})});
 await p.goto('http://127.0.0.1:'+server.address().port);
 await p.evaluate(()=>localStorage.setItem('strength-journal-v1',JSON.stringify([{id:'old',date:'2026-11-01',type:'B',notes:'private note 腰痛',exercises:[{name:'高脚杯深蹲',sets:[{weight:12,reps:14,aiTarget:{reps:999}}]}]}])));await p.reload();
-await p.click('[data-page="ai"]');await p.fill('#proxyUrl','https://example.com');await p.fill('#proxyToken','test-only');await p.selectOption('#aiType','B');await p.click('#aiSuggest');await p.locator('#applyPlan').waitFor({state:'visible'});
+await p.click('[data-page="ai"]');await p.selectOption('#connectionMode','worker');await p.fill('#proxyUrl','https://example.com');await p.fill('#proxyToken','test-only');await p.selectOption('#aiType','B');await p.click('#aiSuggest');await p.locator('#applyPlan').waitFor({state:'visible'});
 assert.ok(!JSON.stringify(sent).includes('private note'));assert.ok(!JSON.stringify(sent).includes('999'));assert.ok(!JSON.stringify(sent).includes('腰痛'));
 await p.click('#applyPlan');assert.equal(await p.inputValue('[data-i="0"][data-j="0"][data-field="weight"]'),'6');assert.equal(await p.inputValue('[data-i="0"][data-j="0"][data-field="reps"]'),'');assert.match(await p.locator('#list').textContent(),/AI 建议：8次/);
 await p.click('#finish');assert.equal(await p.evaluate(()=>JSON.parse(localStorage.getItem('strength-journal-v1')).length),1);
