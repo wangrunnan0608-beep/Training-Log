@@ -1,0 +1,13 @@
+#!name=Apple Intelligence 分流
+#!desc=将 Apple AI 与 Siri 相关域名交给当前配置的代理策略；请确认实际出站为美国节点。
+#!author=Personal rules
+
+[Rule]
+DOMAIN-SUFFIX,smoot.apple.com,PROXY
+DOMAIN-SUFFIX,guzzoni.apple.com,PROXY
+DOMAIN-SUFFIX,gspe1-ssl.ls.apple.com,PROXY
+DOMAIN-SUFFIX,apple-relay.mask.apple-dns.net,PROXY
+DOMAIN-SUFFIX,apple-relay.fastly-edge.com,PROXY
+DOMAIN-SUFFIX,apple-relay.apple.com,PROXY
+DOMAIN-SUFFIX,apple-relay.cloudflare.com,PROXY
+DOMAIN-SUFFIX,cp4.cloudflare.com,PROXY
